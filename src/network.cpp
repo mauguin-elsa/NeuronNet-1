@@ -1,6 +1,7 @@
 #include "network.h"
 #include "random.h"
 
+
 void Network::resize(const size_t &n, double inhib) {
     size_t old = size();
     neurons.resize(n);
@@ -60,7 +61,60 @@ size_t Network::random_connect(const double &mean_deg, const double &mean_streng
         num_links += nl;
     }
     return num_links;
+    
 }
+
+ 
+std::pair<size_t, double> Network::degree(const size_t& n) const
+{	std::vector<std::pair<size_t, double> > linkedNeurons = neighbors(n);
+	double intensity(0);
+	                     
+	for (size_t i(0); i<linkedNeurons.size(); ++i) {
+			intensity += linkedNeurons[i].second;
+			
+	}
+	std::pair<size_t, double> degree(linkedNeurons.size(), intensity);
+	return degree;
+	
+}	
+
+  
+std::vector<std::pair<size_t, double> > Network:: neighbors(const size_t& n) const
+{
+	std::vector<std::pair<size_t, double> > voisins;
+	
+	for (auto& link :links)
+	{
+		if((link.first).first==n or (link.first).second==n){
+			std::pair<size_t, double> connected((link.first).second, link.second);
+			voisins.push_back(connected);
+		}
+	}
+	
+	return voisins;
+			
+}
+
+std::set<size_t> Network:: step(const std::vector<double>& t)
+{
+    double intensity(0);
+	std::set<size_t> firing_neurons;
+	for(size_t i(0); i<neurons.size(); ++i) {
+		if (neurons[i].firing()) {
+			firing_neurons.insert(i);
+			neurons[i].reset();
+		}
+		if(neurons[i].is_inhibitory()) { intensity= 0.4;}
+	    else { intensity = 1.0;}
+		  
+		neurons[i].input(t[i] * intensity);
+        neurons[i].step();
+
+	}
+
+	return firing_neurons;
+}
+
 
 std::vector<double> Network::potentials() const {
     std::vector<double> vals;
@@ -87,7 +141,8 @@ void Network::print_params(std::ostream *_out) {
 }
 
 void Network::print_head(const std::map<std::string, size_t> &_nt, 
-                         std::ostream *_out) {
+                         std::ostream *_out) 
+{
     size_t total = 0;
     for (auto It : _nt) {
         total += It.second;
@@ -109,7 +164,8 @@ void Network::print_head(const std::map<std::string, size_t> &_nt,
 }
 
 void Network::print_traj(const int time, const std::map<std::string, size_t> &_nt, 
-                         std::ostream *_out) {
+                         std::ostream *_out) 
+{
     (*_out)  << time;
     size_t total = 0;
     for (auto It : _nt) {
@@ -128,3 +184,5 @@ void Network::print_traj(const int time, const std::map<std::string, size_t> &_n
             }
     (*_out) << std::endl;
 }
+
+
